@@ -175,8 +175,8 @@ def generate_psd(select, log=False):
 def generate_orbit(select):
     orbits = allorbits[select]
     tot_frame = []
-    starts_x = []
-    starts_y = []
+    tot_xs = []
+    tot_ys = []
     for ii, i in enumerate(select):
         thisorb = orbits[ii]
         if df['age_PARAM_BHM'][i] != -9999.:
@@ -191,8 +191,8 @@ def generate_orbit(select):
         for i in range(nframe-1):
             frames.append(go.Frame(data=[go.Scatter(x=xs[i*10:i*10+10], y=ys[i*10:i*10+10], mode='lines')]))
         tot_frame.append(frames)
-        starts_x.append(thisorb.x(0*u.Gyr))
-        starts_y.append(thisorb.y(0*u.Gyr))
+        tot_xs.append(xs)
+        tot_ys.append(ys)
     layout = go.Layout( xaxis=dict(scaleanchor='y', scaleratio=1, autorange=False),
                         yaxis=dict(range=[np.min(ys), np.max(ys)], autorange=False),
         updatemenus=[dict(
@@ -201,7 +201,7 @@ def generate_orbit(select):
                           method="animate",
                           args=[None])])])
     if len(tot_frame) == 1:
-        fig = go.Figure(data=[go.Scatter(x=[starts_x[0],], y=[starts_y[0],]), go.Scatter(x=allorbits.x(), y=allorbits.y())],
+        fig = go.Figure(data=[go.Scatter(x=[tot_xs[0][0],], y=[tot_ys[0][0],]), go.Scatter(x=allorbits.x(), y=allorbits.y(), mode='markers', marker=dict(size=1, color='#BB5566', opacity=0.5))],
                         layout=layout,
                         frames = tot_frame[0])
     return fig
