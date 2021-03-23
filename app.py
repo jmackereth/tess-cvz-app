@@ -240,11 +240,14 @@ app.layout = html.Div([
 
         ], className = "row"),
     ]),
-    dcc.Markdown('''I am going to add this here. This dashboard is intended to allow basic exploration of the data set presented in [Mackereth et al. 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.1947M/abstract). Here, we only show a subset of the highest quality data from the full catalogue presented there, selecting stars whose asteroseismic parameters agreed between three independent pipelines, and whose luminosities derived asteroseismically and photometrically agree within $1\sigma$.
+    dcc.Markdown('''This dashboard is intended to allow basic exploration of the data set presented in [Mackereth et al. 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.1947M/abstract). Here, we only show a subset of the highest quality data from the full catalogue presented there, selecting stars whose asteroseismic parameters agreed between three independent pipelines, and whose luminosities derived asteroseismically and photometrically agree within $1\sigma$.
                  ''',
                  className="twelve columns"),
     html.Br(),
-    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way''',
+    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way. The following panels show, from left to right, top to bottom:
+                    - The colour-magnitude diagram
+                    - Stellar mass vs radius
+                    - the positions of the stars on the sky in ecliptic coordinates''',
                  className="twelve columns"),
     html.Br(),
     html.Div(id='my-output'),
