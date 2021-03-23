@@ -4,10 +4,13 @@ import dash_html_components as html
 import pandas as pd
 import plotly.express as px
 from astropy.io import ascii
+import astropy.units as u
 import numpy as np
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from galpy.orbit import Orbit
+from galpy.potential import MWPotential2014
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -15,21 +18,23 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_sc
   'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
 ])
 
-data = ascii.read('data/TESS_CVZ_brightgiants_reduced_270820.dat')
+data = ascii.read('data/TESS_CVZ_brightgiants_goodsample.dat',format='csv')
 df = pd.DataFrame.from_records(data, columns=data.dtype.names)
 
 mask = (df['numax_dnu_consistent'] == 1) & (df['lum_flag_BHM'] == 1)
 df = df[mask]
 
-with open('data/standardised_psds.npy', 'rb') as f:
+with open('data/standardised_psds_goodsample.npy', 'rb') as f:
     psds = np.load(f)
     grid = np.load(f)
     source_ids = np.load(f)
 
-common, indx1, indx2 = np.intersect1d(source_ids,df['source_id'],return_indices=True)
+allvxvv = np.dstack([np.array(df['ra'], dtype=np.float64), np.array(df['dec'], dtype=np.float64), np.array(1/df['parallax'], dtype=np.float64), np.array(df['pmra'], dtype=np.float64), np.array(df['pmdec'], dtype=np.float64), np.array(df['radial_velocity'], dtype=np.float64)])[0]
+allorbits = Orbit(allvxvv, radec=True, ro=8.175, vo=220.)
+#common, indx1, indx2 = np.intersect1d(source_ids,df['source_id'],return_indices=True)
 
-df = df.iloc[indx2]
-psds = psds[indx1]
+#df = df.iloc[indx2]
+#psds = psds[indx1]
 
 def generate_cmd(df, selected_data):
     layout = go.Layout(
@@ -167,6 +172,41 @@ def generate_psd(select, log=False):
     else:
         return {"data": traces, "layout":layout}
 
+def generate_orbit(select):
+    orbits = allorbits[select]
+    tot_frame = []
+    starts_x = []
+    starts_y = []
+    for ii, i in enumerate(select):
+        thisorb = orbits[ii]
+        if df['age_PARAM_BHM'][i] != -9999.:
+            ts = np.linspace(0., -1*df['age_PARAM_BHM'][i]*u.Gyr, int(df['age_PARAM_BHM'][i]*1000))
+        else:
+            ts = np.linspace(0., -2.*u.Gyr, 2000)
+        thisorb.integrate(ts, MWPotential2014)
+        xs = thisorb.x(ts)
+        ys = thisorb.y(ts)
+        nframe = int(len(ts)/10)
+        frames = []
+        for i in range(nframe-1):
+            frames.append(go.Frame(data=[go.Scatter(x=xs[i*10:i*10+10], y=ys[i*10:i*10+10], mode='lines')]))
+        tot_frame.append(frames)
+        starts_x.append(thisorb.x(0*u.Gyr))
+        starts_y.append(thisorb.y(0*u.Gyr))
+    layout = go.Layout( xaxis=dict(scaleanchor='y', scaleratio=1, autorange=False),
+                        yaxis=dict(range=[np.min(ys), np.max(ys)], autorange=False),
+        updatemenus=[dict(
+            type="buttons",
+            buttons=[dict(label="Play",
+                          method="animate",
+                          args=[None])])])
+    if len(tot_frame) == 1:
+        fig = go.Figure(data=[go.Scatter(x=[starts_x[0],], y=[starts_y[0],]), go.Scatter(x=allorbits.x(), y=allorbits.y())],
+                        layout=layout,
+                        frames = tot_frame[0])
+    return fig
+
+
 def get_selection(selection_data):
     ind = []
     #only one curve so we dont care about curveNumber
@@ -248,7 +288,10 @@ app.layout = html.Div([
     html.Div([dcc.Graph(id='psd-plot',)],
              style={'display': 'inline-block', 'width': '80%', 'float':'right'}),
     ]),
-    html.Br(),])
+    html.Br(),
+    html.Div([html.H2(children='A closer look at the properties of the star', className = 'eight columns', style={'font-family':"Arial", 'color': "#8B0000", 'fontSize': 32})]),
+    html.Div([dcc.Graph(id='orbit-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'}),
+    html.Div([dcc.Graph(id='abundance-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
 
 
 @app.callback(
@@ -353,7 +396,6 @@ def update_polar(cmdselect, mrselect):
 def update_psd(cmdselect, mrselect, polarselect, scale):
     # Find which one has been triggered
     ctx = dash.callback_context
-
     prop_id = ""
     prop_type = ""
     if ctx.triggered:
@@ -368,6 +410,7 @@ def update_psd(cmdselect, mrselect, polarselect, scale):
             select = get_selection(cmdselect)
         if scale == 'log':
             log = True
+
     elif prop_id == "mass-radius-scatter":
         if mrselect is None:
             select = [0]
@@ -375,6 +418,7 @@ def update_psd(cmdselect, mrselect, polarselect, scale):
             select = get_selection(mrselect)
         if scale == 'log':
             log = True
+        last_trigger = 'mr'
     elif prop_id == "polar-scatter":
         if polarselect is None:
             select = [0]
@@ -382,6 +426,7 @@ def update_psd(cmdselect, mrselect, polarselect, scale):
             select = get_selection(polarselect)
         if scale == 'log':
             log = True
+        last_trigger = 'polar'
     elif prop_id == "scale-selector":
         if scale == 'log':
             log = True
@@ -391,9 +436,48 @@ def update_psd(cmdselect, mrselect, polarselect, scale):
             select = get_selection(cmdselect)
     else:
         select = [0]
+
     return generate_psd(select, log=log)
 
+@app.callback(
+    Output("orbit-plot", "figure"),
+    [
+    Input("color-magnitude-scatter", "selectedData"),
+    Input("mass-radius-scatter", "selectedData"),
+    Input("polar-scatter", "selectedData")
+    ]
+)
+def update_orbit(cmdselect, mrselect, polarselect):
+    # Find which one has been triggered
+    ctx = dash.callback_context
+    prop_id = ""
+    prop_type = ""
+    if ctx.triggered:
+        splitted = ctx.triggered[0]["prop_id"].split(".")
+        prop_id = splitted[0]
+        prop_type = splitted[1]
+    log= False
+    if prop_id == "color-magnitude-scatter":
+        if cmdselect is None:
+            select = [0]
+        else:
+            select = get_selection(cmdselect)
+    elif prop_id == "mass-radius-scatter":
+        if mrselect is None:
+            select = [0]
+        else:
+            select = get_selection(mrselect)
+        last_trigger = 'mr'
+    elif prop_id == "polar-scatter":
+        if polarselect is None:
+            select = [0]
+        else:
+            select = get_selection(polarselect)
+        last_trigger = 'polar'
+    else:
+        select = [0]
 
+    return generate_orbit(select)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
