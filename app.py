@@ -31,10 +31,7 @@ with open('data/standardised_psds_goodsample.npy', 'rb') as f:
 
 allvxvv = np.dstack([np.array(df['ra'], dtype=np.float64), np.array(df['dec'], dtype=np.float64), np.array(1/df['parallax'], dtype=np.float64), np.array(df['pmra'], dtype=np.float64), np.array(df['pmdec'], dtype=np.float64), np.array(df['radial_velocity'], dtype=np.float64)])[0]
 allorbits = Orbit(allvxvv, radec=True, ro=8.175, vo=220.)
-#common, indx1, indx2 = np.intersect1d(source_ids,df['source_id'],return_indices=True)
 
-#df = df.iloc[indx2]
-#psds = psds[indx1]
 
 def generate_cmd(df, selected_data):
     layout = go.Layout(
@@ -214,10 +211,6 @@ def get_selection(selection_data):
         ind.append(point["pointNumber"])
     return ind
 
-#cmdfig = px.scatter(x=df.jmag-df.kmag, y=df.kmag-(5*np.log10(1000/df.parallax)-5), color=df.N_sectors, custom_data=[df.source_id])
-#cmdfig.update_layout(clickmode='event+select')
-#cmdfig.update_traces(marker_size=4)
-
 app.layout = html.Div([
     html.Div([
         html.Div([
@@ -244,9 +237,9 @@ app.layout = html.Div([
                  ''',
                  className="twelve columns"),
     html.Br(),
-    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way. The following panels show, from left to right, top to bottom:
-                    - The colour-magnitude diagram
-                    - Stellar mass vs radius
+    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way. The following panels show, from left to right, top to bottom:\n
+                    - The colour-magnitude diagram\n
+                    - Stellar mass vs radius\n
                     - the positions of the stars on the sky in ecliptic coordinates''',
                  className="twelve columns"),
     html.Br(),
@@ -294,7 +287,7 @@ app.layout = html.Div([
     html.Br(),
     html.Div([html.H2(children='A closer look at the properties of the star', className = 'eight columns', style={'font-family':"Arial", 'color': "#8B0000", 'fontSize': 32})]),
     html.Div([dcc.Graph(id='orbit-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'}),
-    html.Div([dcc.Graph(id='abundance-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
+    html.Div([dcc.Graph(id='flexible-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
 
 
 @app.callback(
@@ -306,7 +299,6 @@ app.layout = html.Div([
 )
 def update_cmd(polarselect, mrselect):
     ctx = dash.callback_context
-
     prop_id = ""
     prop_type = ""
     if ctx.triggered:
@@ -481,6 +473,8 @@ def update_orbit(cmdselect, mrselect, polarselect):
         select = [0]
 
     return generate_orbit(select)
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
