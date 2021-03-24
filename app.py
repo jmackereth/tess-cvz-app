@@ -1,20 +1,28 @@
+import os
 import dash
+import flask
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
+
 import pandas as pd
 import plotly.express as px
 from astropy.io import ascii
 import astropy.units as u
 import numpy as np
 import plotly.graph_objs as go
-from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
+
 from galpy.orbit import Orbit
 from galpy.potential import MWPotential2014
 
+server = flask.Flask(__name__)
+server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=[
+app = dash.Dash(__name__, server=server, external_stylesheets=external_stylesheets, external_scripts=[
   'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
 ])
 
@@ -483,4 +491,4 @@ def update_orbit(cmdselect, mrselect, polarselect):
     return generate_orbit(select)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.server.run()
