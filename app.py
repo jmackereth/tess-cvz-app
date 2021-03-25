@@ -5,6 +5,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from random import randint
 
 import pandas as pd
 import plotly.express as px
@@ -17,7 +18,7 @@ from galpy.orbit import Orbit
 from galpy.potential import MWPotential2014
 
 server = flask.Flask(__name__)
-server.secret_key = os.environ.get('secret_key', str(np.randint(0, 1000000)))
+server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
