@@ -17,7 +17,7 @@ from galpy.orbit import Orbit
 from galpy.potential import MWPotential2014
 
 server = flask.Flask(__name__)
-server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+server.secret_key = os.environ.get('secret_key', str(np.randint(0, 1000000)))
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
