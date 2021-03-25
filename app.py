@@ -31,10 +31,7 @@ with open('data/standardised_psds_goodsample.npy', 'rb') as f:
 
 allvxvv = np.dstack([np.array(df['ra'], dtype=np.float64), np.array(df['dec'], dtype=np.float64), np.array(1/df['parallax'], dtype=np.float64), np.array(df['pmra'], dtype=np.float64), np.array(df['pmdec'], dtype=np.float64), np.array(df['radial_velocity'], dtype=np.float64)])[0]
 allorbits = Orbit(allvxvv, radec=True, ro=8.175, vo=220.)
-#common, indx1, indx2 = np.intersect1d(source_ids,df['source_id'],return_indices=True)
 
-#df = df.iloc[indx2]
-#psds = psds[indx1]
 
 def generate_cmd(df, selected_data):
     layout = go.Layout(
@@ -175,8 +172,8 @@ def generate_psd(select, log=False):
 def generate_orbit(select):
     orbits = allorbits[select]
     tot_frame = []
-    starts_x = []
-    starts_y = []
+    tot_xs = []
+    tot_ys = []
     for ii, i in enumerate(select):
         thisorb = orbits[ii]
         if df['age_PARAM_BHM'][i] != -9999.:
@@ -191,8 +188,8 @@ def generate_orbit(select):
         for i in range(nframe-1):
             frames.append(go.Frame(data=[go.Scatter(x=xs[i*10:i*10+10], y=ys[i*10:i*10+10], mode='lines')]))
         tot_frame.append(frames)
-        starts_x.append(thisorb.x(0*u.Gyr))
-        starts_y.append(thisorb.y(0*u.Gyr))
+        tot_xs.append(xs)
+        tot_ys.append(ys)
     layout = go.Layout( xaxis=dict(scaleanchor='y', scaleratio=1, autorange=False),
                         yaxis=dict(range=[np.min(ys), np.max(ys)], autorange=False),
         updatemenus=[dict(
@@ -201,7 +198,7 @@ def generate_orbit(select):
                           method="animate",
                           args=[None])])])
     if len(tot_frame) == 1:
-        fig = go.Figure(data=[go.Scatter(x=[starts_x[0],], y=[starts_y[0],]), go.Scatter(x=allorbits.x(), y=allorbits.y())],
+        fig = go.Figure(data=[go.Scatter(x=[tot_xs[0][0],], y=[tot_ys[0][0],]), go.Scatter(x=allorbits.x(), y=allorbits.y(), mode='markers', marker=dict(size=1, color='#BB5566', opacity=0.5))],
                         layout=layout,
                         frames = tot_frame[0])
     return fig
@@ -213,10 +210,6 @@ def get_selection(selection_data):
     for point in selection_data["points"]:
         ind.append(point["pointNumber"])
     return ind
-
-#cmdfig = px.scatter(x=df.jmag-df.kmag, y=df.kmag-(5*np.log10(1000/df.parallax)-5), color=df.N_sectors, custom_data=[df.source_id])
-#cmdfig.update_layout(clickmode='event+select')
-#cmdfig.update_traces(marker_size=4)
 
 app.layout = html.Div([
     html.Div([
@@ -240,11 +233,14 @@ app.layout = html.Div([
 
         ], className = "row"),
     ]),
-    dcc.Markdown('''I am going to add this here. This dashboard is intended to allow basic exploration of the data set presented in [Mackereth et al. 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.1947M/abstract). Here, we only show a subset of the highest quality data from the full catalogue presented there, selecting stars whose asteroseismic parameters agreed between three independent pipelines, and whose luminosities derived asteroseismically and photometrically agree within $1\sigma$.
+    dcc.Markdown('''This dashboard is intended to allow basic exploration of the data set presented in [Mackereth et al. 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.1947M/abstract). Here, we only show a subset of the highest quality data from the full catalogue presented there, selecting stars whose asteroseismic parameters agreed between three independent pipelines, and whose luminosities derived asteroseismically and photometrically agree within $1\sigma$.
                  ''',
                  className="twelve columns"),
     html.Br(),
-    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way''',
+    dcc.Markdown('''First, we will look at the fundamental properties of the stars themselves, before we dive deeper into their orbits and positions in the Milky Way. The following panels show, from left to right, top to bottom:\n
+                    - The colour-magnitude diagram\n
+                    - Stellar mass vs radius\n
+                    - the positions of the stars on the sky in ecliptic coordinates''',
                  className="twelve columns"),
     html.Br(),
     html.Div(id='my-output'),
@@ -291,7 +287,7 @@ app.layout = html.Div([
     html.Br(),
     html.Div([html.H2(children='A closer look at the properties of the star', className = 'eight columns', style={'font-family':"Arial", 'color': "#8B0000", 'fontSize': 32})]),
     html.Div([dcc.Graph(id='orbit-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'}),
-    html.Div([dcc.Graph(id='abundance-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
+    html.Div([dcc.Graph(id='flexible-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
 
 
 @app.callback(
@@ -303,7 +299,6 @@ app.layout = html.Div([
 )
 def update_cmd(polarselect, mrselect):
     ctx = dash.callback_context
-
     prop_id = ""
     prop_type = ""
     if ctx.triggered:
@@ -478,6 +473,8 @@ def update_orbit(cmdselect, mrselect, polarselect):
         select = [0]
 
     return generate_orbit(select)
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
