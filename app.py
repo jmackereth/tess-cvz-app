@@ -27,13 +27,13 @@ app = dash.Dash(__name__, server=server, external_stylesheets=external_styleshee
   'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
 ])
 
-data = ascii.read('data/TESS_CVZ_brightgiants_goodsample.dat',format='csv')
+data = ascii.read('data/TESS_CVZ_brightgiants_goodsample_v1.02.dat',format='csv')
 df = pd.DataFrame.from_records(data, columns=data.dtype.names)
 
 mask = (df['numax_dnu_consistent'] == 1) & (df['lum_flag_BHM'] == 1)
 df = df[mask]
 
-with open('data/standardised_psds_goodsample.npy', 'rb') as f:
+with open('data/standardised_psds_goodsample_v1.02.npy', 'rb') as f:
     psds = np.load(f)
     grid = np.load(f)
     source_ids = np.load(f)
