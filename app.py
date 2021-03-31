@@ -206,6 +206,40 @@ def generate_orbit(select):
                         frames = tot_frame[0])
     return fig
 
+def generate_flexible(df, selected_data):
+    layout = go.Layout(
+        clickmode="event+select",
+        dragmode="lasso",
+        showlegend=False,
+        autosize=True,
+        hovermode="closest",
+        xaxis_title='mass',
+        yaxis_title='age',
+        #xaxis=go.layout.XAxis(title=r'$$(J-K)$$', range=[0.5,1.05]),
+        #yaxis=go.layout.YAxis(title=r'$$M_{K_S}$$', range=[0.5,-4.3])
+        updatemenus=[dict(
+            buttons=list([
+                dict(label='age', method='update', 
+                     args=[{'y' : [list(df['age_PARAM_BHM'])]}, 
+                           {'yaxis' : {'title' : 'age'}}]), 
+                dict(label='mass', method='update', 
+                     args=[{'y' : [list(df['mass_PARAM_BHM'])]}, 
+                           {'yaxis' : {'title' : 'mass'}}])
+            ])
+        )]
+    )
+
+    if selected_data:
+            select_indices = selected_data
+    else:
+        select_indices = None
+    hovertemplate = "<b> %{text}</b><br><br> N_sectors: %{customdata:.0i}<extra></extra>"
+
+    fig = go.Figure(data=[go.Scatter(x=df['mass_PARAM_BHM'], y=df['age_PARAM_BHM'], mode='markers')],
+                    layout=layout)
+
+    return fig
+
 
 def get_selection(selection_data):
     ind = []
@@ -291,7 +325,7 @@ app.layout = html.Div([
     html.Br(),
     html.Div([html.H2(children='A closer look at the properties of the star', className = 'eight columns', style={'font-family':"Arial", 'color': "#8B0000", 'fontSize': 32})]),
     html.Div([dcc.Graph(id='orbit-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'}),
-    html.Div([dcc.Graph(id='abundance-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
+    html.Div([dcc.Graph(id='flexible-scatter',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
 
 
 @app.callback(
@@ -478,6 +512,44 @@ def update_orbit(cmdselect, mrselect, polarselect):
         select = [0]
 
     return generate_orbit(select)
+
+@app.callback(
+    Output("flexible-scatter", "figure"),
+    [
+    Input("color-magnitude-scatter", "selectedData"),
+    Input("mass-radius-scatter", "selectedData"),
+    Input("polar-scatter", "selectedData")
+    ]
+)
+def update_flexible(cmdselect, mrselect, polarselect):
+    ctx = dash.callback_context
+
+    prop_id = ""
+    prop_type = ""
+    if ctx.triggered:
+        splitted = ctx.triggered[0]["prop_id"].split(".")
+        prop_id = splitted[0]
+        prop_type = splitted[1]
+    if prop_id == "color-magnitude-scatter":
+        if cmdselect is None:
+            select = [0]
+        else:
+            select = get_selection(cmdselect)
+    elif prop_id == "mass-radius-scatter":
+        if mrselect is None:
+            select = [0]
+        else:
+            select = get_selection(mrselect)
+        last_trigger = 'mr'
+    elif prop_id == "polar-scatter":
+        if polarselect is None:
+            select = [0]
+        else:
+            select = get_selection(polarselect)
+        last_trigger = 'polar'
+    else:
+        select = [0]
+    return generate_flexible(df, select)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
