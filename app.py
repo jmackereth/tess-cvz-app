@@ -115,7 +115,7 @@ app.layout = html.Div([
     html.Br(),
     html.Div([html.H2(children='A closer look at the properties of the star', className = 'eight columns', style={'font-family':"Arial", 'color': "#8B0000", 'fontSize': 32})]),
     html.Div([dcc.Graph(id='orbit-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'}),
-    html.Div([dcc.Graph(id='abundance-plot',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
+    html.Div([dcc.Graph(id='flexible-scatter',)], style={'display': 'inline-block', 'width':'50%', 'float':'left'})])
 
 
 
@@ -124,7 +124,8 @@ app.layout = html.Div([
     Output("mass-radius-scatter", "figure"),
     Output("polar-scatter", "figure"),
     Output("psd-plot", "figure"),
-    Output("orbit-plot", "figure"),
+    Output("orbit-plot", "figure")
+    Output("flexible-scatter", "figure"),
     Input("color-magnitude-scatter", "selectedData"),
     Input("mass-radius-scatter", "selectedData"),
     Input("polar-scatter", "selectedData"),
@@ -159,6 +160,7 @@ def callback(cmdselection,mrselection,polarselection,scaleselection):
             gen_plots.generate_massradius(df, points),
             gen_plots.generate_polar(df, points),
             gen_plots.generate_psd(points,log=log),
+            gen_plots.generate_flexible(df, points),
             gen_plots.generate_orbit(points)]
     return figs
 

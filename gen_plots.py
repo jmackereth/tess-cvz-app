@@ -171,6 +171,85 @@ def generate_psd(select, log=False):
     else:
         return {"data": traces, "layout":layout}
 
+def generate_flexible(df, selected_data):
+    layout = go.Layout(
+        clickmode="event+select",
+        dragmode="lasso",
+        showlegend=False,
+        autosize=True,
+        hovermode="closest",
+        xaxis_title='mass',
+        yaxis_title='age',
+        annotations = list([
+            dict(text='x axis:', x=0.0, y=1.15, xref='paper', yref='paper', showarrow=False ),
+            dict(text='y axis:', x=0.4, y=1.15, xref='paper', yref='paper', showarrow=False ),
+        ]),
+        #xaxis=go.layout.XAxis(title=r'$$(J-K)$$', range=[0.5,1.05]),
+        #yaxis=go.layout.YAxis(title=r'$$M_{K_S}$$', range=[0.5,-4.3])
+        updatemenus=[dict(
+            active=1,
+            buttons=list([
+                dict(label='age', method='update',
+                     args=[{'x' : [list(df['age_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'age'}}]),
+                dict(label='mass', method='update',
+                     args=[{'x' : [list(df['mass_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'mass'}}]),
+                dict(label='radius', method='update',
+                     args=[{'x' : [list(df['rad_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'radius'}}]),
+                dict(label='[Fe/H]', method='update',
+                     args=[{'x' : [list(df['feh_SKYMAPPER'])]},
+                           {'xaxis' : {'title' : '[Fe/H]'}}]),
+                dict(label='T_eff', method='update',
+                     args=[{'x' : [list(df['Teff_SKYMAPPER'])]},
+                           {'xaxis' : {'title' : 'T_eff'}}])
+            ]),
+            x=0.10,
+            y=1.15,
+            xanchor="left",
+            yanchor="top",
+            showactive=True
+        ), dict(
+            active=0,
+            buttons=list([
+                dict(label='age', method='update',
+                     args=[{'y' : [list(df['age_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'age'}}]),
+                dict(label='mass', method='update',
+                     args=[{'y' : [list(df['mass_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'mass'}}]),
+                dict(label='radius', method='update',
+                     args=[{'y' : [list(df['rad_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'radius'}}]),
+                dict(label='[Fe/H]', method='update',
+                     args=[{'y' : [list(df['feh_SKYMAPPER'])]},
+                           {'yaxis' : {'title' : '[Fe/H]'}}]),
+                dict(label='T_eff', method='update',
+                     args=[{'y' : [list(df['Teff_SKYMAPPER'])]},
+                           {'yaxis' : {'title' : 'T_eff'}}])
+
+            ]),
+            x=0.45,
+            y=1.15,
+            xanchor="left",
+            yanchor="top",
+            showactive=True
+        )]
+    )
+
+    if selected_data:
+            select_indices = selected_data
+    else:
+        select_indices = None
+    hovertemplate = "<b> %{text}</b><br><br> N_sectors: %{customdata:.0i}<extra></extra>"
+
+    fig = go.Figure(data=[go.Scatter(x=df['mass_PARAM_BHM'], y=df['age_PARAM_BHM'], mode='markers')],
+                    layout=layout)
+
+    return fig
+
+
 def generate_orbit(select):
     orbits = allorbits[select]
     tot_frame = []
