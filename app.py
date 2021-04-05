@@ -163,4 +163,4 @@ def callback(cmdselection,mrselection,polarselection,scaleselection):
     return figs
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.server.run()
