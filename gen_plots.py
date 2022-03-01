@@ -1,8 +1,8 @@
 import os
 import dash
 import flask
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from random import randint
@@ -59,9 +59,9 @@ def generate_cmd(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": "Black", "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['rad_PARAM_BHM'], "size":7, "line":{"width":0.5, "color":"Black"}, "opacity":1., "colorbar":{"orientation":"h","title":{"text":r'$$R_{\mathrm{BHM}}\ \mathrm{[R_{\odot}]}$$',"side":"top"}}},
                  selected={"marker":{"size":13, "color":'#BB5566', "opacity":1.}},
-                 unselected={"marker":{"opacity":0.1}}
+                 unselected={"marker":{"opacity":0.7}}
                  )
     return {"data": [trace,], "layout":layout}
 
@@ -89,9 +89,9 @@ def generate_massradius(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": "Black", "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['jmag']-df['kmag'], "size":7, "line":{"width":0.5, "color":"Black"}, "opacity":1., "colorbar":{"orientation":"h","title":{"text":r'$$(J-K)$$',"side":"top"}}},
                  selected={"marker":{"size":13, "color":'#BB5566', "opacity":1.}},
-                 unselected={"marker":{"opacity":0.1}}
+                 unselected={"marker":{"opacity":0.7}}
                  )
     return {"data": [trace,], "layout":layout}
 
@@ -103,7 +103,7 @@ def generate_polar(df, selected_data):
         autosize=True,
         hovermode="closest",
         margin=dict(l=0, r=0, t=0, b=0),
-        polar={"radialaxis":{"range":[-90,-65], "title":'$$\mathrm{ecliptic\ latitude}$$'}}
+        polar={"radialaxis":{"layer":"above traces","range":[-90,-65], "title":'$$\mathrm{ecliptic\ latitude}$$'}}
     )
     if selected_data:
         select_indices = selected_data
@@ -119,7 +119,7 @@ def generate_polar(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": df['N_sectors'], "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['N_sectors'], "size":7, "line":{"width":0.5, 'color':'Black'}, "opacity":0.7, },
                  selected={"marker":{"size":13, "color":'#BB5566',  "opacity":1.}}
                  )
     return {"data": [trace,], "layout":layout}
@@ -170,6 +170,85 @@ def generate_psd(select, log=False):
         return fig
     else:
         return {"data": traces, "layout":layout}
+
+def generate_flexible(df, selected_data):
+    layout = go.Layout(
+        clickmode="event+select",
+        dragmode="lasso",
+        showlegend=False,
+        autosize=True,
+        hovermode="closest",
+        xaxis_title='mass',
+        yaxis_title='age',
+        annotations = list([
+            dict(text='x axis:', x=0.0, y=1.15, xref='paper', yref='paper', showarrow=False ),
+            dict(text='y axis:', x=0.4, y=1.15, xref='paper', yref='paper', showarrow=False ),
+        ]),
+        #xaxis=go.layout.XAxis(title=r'$$(J-K)$$', range=[0.5,1.05]),
+        #yaxis=go.layout.YAxis(title=r'$$M_{K_S}$$', range=[0.5,-4.3])
+        updatemenus=[dict(
+            active=1,
+            buttons=list([
+                dict(label='age', method='update',
+                     args=[{'x' : [list(df['age_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'age'}}]),
+                dict(label='mass', method='update',
+                     args=[{'x' : [list(df['mass_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'mass'}}]),
+                dict(label='radius', method='update',
+                     args=[{'x' : [list(df['rad_PARAM_BHM'])]},
+                           {'xaxis' : {'title' : 'radius'}}]),
+                dict(label='[Fe/H]', method='update',
+                     args=[{'x' : [list(df['feh_SKYMAPPER'])]},
+                           {'xaxis' : {'title' : '[Fe/H]'}}]),
+                dict(label='T_eff', method='update',
+                     args=[{'x' : [list(df['Teff_SKYMAPPER'])]},
+                           {'xaxis' : {'title' : 'T_eff'}}])
+            ]),
+            x=0.10,
+            y=1.15,
+            xanchor="left",
+            yanchor="top",
+            showactive=True
+        ), dict(
+            active=0,
+            buttons=list([
+                dict(label='age', method='update',
+                     args=[{'y' : [list(df['age_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'age'}}]),
+                dict(label='mass', method='update',
+                     args=[{'y' : [list(df['mass_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'mass'}}]),
+                dict(label='radius', method='update',
+                     args=[{'y' : [list(df['rad_PARAM_BHM'])]},
+                           {'yaxis' : {'title' : 'radius'}}]),
+                dict(label='[Fe/H]', method='update',
+                     args=[{'y' : [list(df['feh_SKYMAPPER'])]},
+                           {'yaxis' : {'title' : '[Fe/H]'}}]),
+                dict(label='T_eff', method='update',
+                     args=[{'y' : [list(df['Teff_SKYMAPPER'])]},
+                           {'yaxis' : {'title' : 'T_eff'}}])
+
+            ]),
+            x=0.45,
+            y=1.15,
+            xanchor="left",
+            yanchor="top",
+            showactive=True
+        )]
+    )
+
+    if selected_data:
+            select_indices = selected_data
+    else:
+        select_indices = None
+    hovertemplate = "<b> %{text}</b><br><br> N_sectors: %{customdata:.0i}<extra></extra>"
+
+    fig = go.Figure(data=[go.Scatter(x=df['mass_PARAM_BHM'], y=df['age_PARAM_BHM'], mode='markers')],
+                    layout=layout)
+
+    return fig
+
 
 def generate_orbit(select):
     orbits = allorbits[select]
