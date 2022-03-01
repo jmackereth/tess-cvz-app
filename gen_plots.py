@@ -1,8 +1,8 @@
 import os
 import dash
 import flask
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from random import randint
@@ -59,9 +59,9 @@ def generate_cmd(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": "Black", "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['rad_PARAM_BHM'], "size":7, "line":{"width":0.5, "color":"Black"}, "opacity":1., "colorbar":{"orientation":"h","title":{"text":r'$$R_{\mathrm{BHM}}\ \mathrm{[R_{\odot}]}$$',"side":"top"}}},
                  selected={"marker":{"size":13, "color":'#BB5566', "opacity":1.}},
-                 unselected={"marker":{"opacity":0.1}}
+                 unselected={"marker":{"opacity":0.7}}
                  )
     return {"data": [trace,], "layout":layout}
 
@@ -89,9 +89,9 @@ def generate_massradius(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": "Black", "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['jmag']-df['kmag'], "size":7, "line":{"width":0.5, "color":"Black"}, "opacity":1., "colorbar":{"orientation":"h","title":{"text":r'$$(J-K)$$',"side":"top"}}},
                  selected={"marker":{"size":13, "color":'#BB5566', "opacity":1.}},
-                 unselected={"marker":{"opacity":0.1}}
+                 unselected={"marker":{"opacity":0.7}}
                  )
     return {"data": [trace,], "layout":layout}
 
@@ -103,7 +103,7 @@ def generate_polar(df, selected_data):
         autosize=True,
         hovermode="closest",
         margin=dict(l=0, r=0, t=0, b=0),
-        polar={"radialaxis":{"range":[-90,-65], "title":'$$\mathrm{ecliptic\ latitude}$$'}}
+        polar={"radialaxis":{"layer":"above traces","range":[-90,-65], "title":'$$\mathrm{ecliptic\ latitude}$$'}}
     )
     if selected_data:
         select_indices = selected_data
@@ -119,7 +119,7 @@ def generate_polar(df, selected_data):
                  hovertemplate=hovertemplate,
                  selectedpoints=select_indices,
                  showlegend=False,
-                 marker={"color": df['N_sectors'], "size":7, "line":{"width":0.}, "opacity":0.1},
+                 marker={"color": df['N_sectors'], "size":7, "line":{"width":0.5, 'color':'Black'}, "opacity":0.7, },
                  selected={"marker":{"size":13, "color":'#BB5566',  "opacity":1.}}
                  )
     return {"data": [trace,], "layout":layout}
